@@ -1,0 +1,12 @@
+# Iván Álvarez García DNI: 49623492A
+set terminal png
+set output "pow2.png"
+
+set xlabel "size of N"
+set ylabel "Program steps"
+
+set title  "Pow 2"
+
+plot "pow2.Steps" using 1:2 with lp title "pow2_1()" ,\
+"pow2.Steps" using 1:3 with lp title "pow2_2()" ,\
+"pow2.Steps" using 1:4 with lp title "pow2_3()" ,\
