@@ -88,7 +88,6 @@ int maze_memo(const vector<vector<int>>& matrix, vector<vector<int>>& memo, int 
         return matrix[i][j];
     }
 
-
     if (memo[i][j] != -1) {
         return memo[i][j];
     }
@@ -97,6 +96,7 @@ int maze_memo(const vector<vector<int>>& matrix, vector<vector<int>>& memo, int 
     int down = maze_memo(matrix, memo, i+1, j); // calcular el camino más corto hacia abajo
     int diagonal = maze_memo(matrix, memo, i+1, j+1); // calcular el camino más corto hacia abajo y a la derecha
     int shortest = min(right, min(down, diagonal)) + matrix[i][j]; // encontrar el camino más corto de los tres posibles y sumar el valor de la casilla actual
+
 
     memo[i][j] = shortest; // almacenar el resultado en la matriz de memoización
     return shortest;
@@ -140,7 +140,7 @@ void maze_parser(vector<vector<string>>& path, const vector<vector<int>>& memo, 
 
     for(int i = 0; i < n-1; i++){
         for(int j = 0; j < m-1; j++){
-            path[i][j] = maze[i][j];
+            path[i][j] = to_string(maze[i][j]);
         }
     }
 }
@@ -158,7 +158,27 @@ int memo_path(vector<vector<string>> path, int n, int m){
     return len;
 }
 
-void output(bool naive, bool p, bool t, const vector<vector<int>>& maze, int r, int c,vector<vector<int>>& memo, vector<vector<string>>& path){
+void maze_parser(vector<vector<string>> &path, vector<vector<int>> memo, vector<vector<int>> maze, int n, int m){
+
+    for(int i = 0; i<n; i++){
+        for(int j = 0; j<m; j++){
+            if(inside_matrix(i+1, j+1, n, m)){
+                int value = min(memo[i+1][j], min(memo[i+1][j+1], memo[i][j+1]));
+                if(memo[i+1][j] == value){
+                    path[i+1][j] = "*";
+                }else if(memo[i+1][j+1] == value){
+                    path[i+1][j+1] = "*";
+                }else if(memo[i][j+1] == value){
+                    path[i][j+1] = "*";
+                }else{
+                    path[i][j] = to_string(maze[i][j]);
+                }
+            }
+        }
+    }
+}
+
+void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c,vector<vector<int>>& memo, vector<vector<string>>& path){
 
     if(naive){
         cout<<"- ";
@@ -173,6 +193,7 @@ void output(bool naive, bool p, bool t, const vector<vector<int>>& maze, int r, 
         }
     }
     int shortest_path_memo = maze_memo(maze,memo,0,0); //camino más corto calculado por memoización
+
 
     if(shortest_path_memo >= INF){
         cout<<"0 ";
@@ -191,8 +212,9 @@ void output(bool naive, bool p, bool t, const vector<vector<int>>& maze, int r, 
     
 
     if(p){
-        maze_parser(path,memo,maze,r,c);
+        //maze_parser(path,memo,maze,r,c);
         //int len = memo_path(path,r,c); //obtiene la longitud del camino
+
 
         //if(len > 2){
             for(int i = 0; i<r; i++){
