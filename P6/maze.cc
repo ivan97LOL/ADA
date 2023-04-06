@@ -1,10 +1,14 @@
+//Iván Álvarez García DNI: 49623492A
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <string>
 #include <algorithm>
 
+
 using namespace std ;
+
+const int INF = 1e9; // valor de infinito
 
 void usage() {
     cerr << "Usage:" << endl;
@@ -38,7 +42,7 @@ bool inside_matrix(int i, int j, int n, int m) {
 }
 
 // Función recursiva que calcula el camino más corto desde (i, j) hasta (n-1, m-1)
-int naive_method(vector<vector<int>> matrix, int i, int j, int n, int m) {
+int maze_naive(vector<vector<int>> matrix, int i, int j, int n, int m) {
     if (!inside_matrix(i, j, n, m) || matrix[i][j] == 0) {
         return -1; // no hay un camino válido desde la celda actual
     }
@@ -46,22 +50,22 @@ int naive_method(vector<vector<int>> matrix, int i, int j, int n, int m) {
     if (i == n-1 && j == m-1) {
         return matrix[i][j];
     }
-    int right = naive_method(matrix, i, j+1, n, m);
-    int down = naive_method(matrix, i+1, j, n, m);
-    int diagonal = naive_method(matrix, i+1, j+1, n, m);
+    int right = maze_naive(matrix, i, j+1, n, m);
+    int down = maze_naive(matrix, i+1, j, n, m);
+    int diagonal = maze_naive(matrix, i+1, j+1, n, m);
     int shortest_path = -1; // valor especial para indicar que no hay un camino válido
 
     if (right != -1) {
-        shortest_path = right;
+        shortest_path = right;  //pasamos a la casilla de la derecha
     }
     if (down != -1) {
         if (shortest_path == -1 || down < shortest_path) {
-            shortest_path = down;
+            shortest_path = down;   //pasamos a la casilla de abajo
         }
     }
     if (diagonal != -1) {
         if (shortest_path == -1 || diagonal < shortest_path) {
-            shortest_path = diagonal;
+            shortest_path = diagonal;   //pasamos a la casilla de la diagonal
         }
     }
     if (shortest_path == -1) {
@@ -71,22 +75,17 @@ int naive_method(vector<vector<int>> matrix, int i, int j, int n, int m) {
     }
 }
 
-int memoized_method(vector<vector<int>>& matrix, vector<vector<int>>& memo, vector<vector<string>>& path, int i, int j, int n, int m) {
+int maze_memo(const vector<vector<int>>& matrix, vector<vector<int>>& memo, int i, int j) {
+
+    int n = matrix.size();
+    int m = matrix[0].size();
 
     if (!inside_matrix(i, j, n, m) || matrix[i][j] == 0) {
-        return -1; // no hay un camino válido desde la celda actual
-    }
-
-    if(i == 0 && j == 0 && matrix[i][j] == 1){
-        path[i][j] = "*"; // marca la primera posición con un asterisco
+        return INF; // no hay un camino válido desde la celda actual
     }
     
     if (i == n - 1 && j == m - 1) {
-        if (matrix[i][j] == 1) {
-            path[i][j] = "*"; // marca la última posición con un asterisco
-            return 1;
-        }
-        return -1;
+        return matrix[i][j];
     }
 
 
@@ -94,62 +93,59 @@ int memoized_method(vector<vector<int>>& matrix, vector<vector<int>>& memo, vect
         return memo[i][j];
     }
 
-    int right = -1, down = -1, diagonal = -1;
+    int right = maze_memo(matrix, memo, i, j+1); // calcular el camino más corto hacia la derecha
+    int down = maze_memo(matrix, memo, i+1, j); // calcular el camino más corto hacia abajo
+    int diagonal = maze_memo(matrix, memo, i+1, j+1); // calcular el camino más corto hacia abajo y a la derecha
+    int shortest = min(right, min(down, diagonal)) + matrix[i][j]; // encontrar el camino más corto de los tres posibles y sumar el valor de la casilla actual
 
-    if (j+1 < m) {
-        if(memo[i][j+1] != -1){
-            right = memo[i][j+1];
-        }else{
-            right = memoized_method(matrix, memo, path, i, j+1, n, m);
-        }
-    }
-
-    if (i+1 < n) {
-        if(memo[i+1][j] != -1){
-            down = memo[i+1][j];
-        }else{
-            down = memoized_method(matrix, memo, path, i+1, j, n, m);
-        }
-    }
-
-    if (i+1 < n && j+1 < m) {
-        if(memo[i+1][j+1] != -1){
-            diagonal = memo[i+1][j+1];
-        }else{
-            diagonal = memoized_method(matrix, memo, path, i+1, j+1, n, m);
-        }
-    }
-
-    int res = -1;
-    if (right != -1) {
-        path[i][j+1] = "*";
-        res = right;
-    }
-
-    if (down != -1) {
-        if (res == -1 || down < res) {
-            path[i+1][j] = "*";
-            res = down;
-        }
-    }
-
-    if (diagonal != -1) {
-        if (res == -1 || diagonal < res) {
-            path[i+1][j+1] = "*";
-            res = diagonal;
-        }
-    }
-
-    if (res != -1) {
-        res++;
-    }
-
-    memo[i][j] = res;
-
-    return res;
+    memo[i][j] = shortest; // almacenar el resultado en la matriz de memoización
+    return shortest;
 }
 
-int memo_path(vector<vector<string>>& path, int n, int m){
+int maze_it_matrix(const vector<vector<int>> &matrix) {
+    int n = matrix.size();
+    int m = matrix[0].size();
+
+    vector<vector<int>> iterative(n, vector<int>(m, INF));
+    iterative[0][0] = matrix[0][0];
+
+    if(iterative[0][0] == 0){
+        return 0;
+    }
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (matrix[i][j] == 0){ // invalid cell
+                continue;
+            } 
+
+            if (i > 0 && j > 0) {
+                iterative[i][j] = min(iterative[i][j], iterative[i-1][j-1] + matrix[i][j]); // diagonal move
+            }
+            if (i > 0) {
+                iterative[i][j] = min(iterative[i][j], iterative[i-1][j] + matrix[i][j]); // up move
+            }
+            if (j > 0) {
+                iterative[i][j] = min(iterative[i][j], iterative[i][j-1] + matrix[i][j]); // left move
+            }
+        }
+    }
+
+    return iterative[n-1][m-1];
+
+}
+
+
+void maze_parser(vector<vector<string>>& path, const vector<vector<int>>& memo, const vector<vector<int>>& maze, int n, int m){
+
+    for(int i = 0; i < n-1; i++){
+        for(int j = 0; j < m-1; j++){
+            path[i][j] = maze[i][j];
+        }
+    }
+}
+
+int memo_path(vector<vector<string>> path, int n, int m){
     int len = 0;
     for(int i = 0; i<n; i++){
         for(int j = 1; j<m; j++){
@@ -162,12 +158,12 @@ int memo_path(vector<vector<string>>& path, int n, int m){
     return len;
 }
 
-void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c,vector<vector<int>>& memo, vector<vector<string>>& path){
+void output(bool naive, bool p, bool t, const vector<vector<int>>& maze, int r, int c,vector<vector<int>>& memo, vector<vector<string>>& path){
 
     if(naive){
         cout<<"- ";
     }else{
-        int shortest_path_naive = naive_method(maze,0,0,r,c);
+        int shortest_path_naive = maze_naive(maze,0,0,r,c); //camino más corto calculado por recursión sin almacenamiento
     
         if(shortest_path_naive == -1){
             cout<<"0 ";
@@ -176,47 +172,45 @@ void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c,v
             cout<< shortest_path_naive<< " ";
         }
     }
-    int shortest_path_memo = memoized_method(maze,memo,path,0,0,r,c);
+    int shortest_path_memo = maze_memo(maze,memo,0,0); //camino más corto calculado por memoización
 
-    if(shortest_path_memo == -1){
+    if(shortest_path_memo >= INF){
         cout<<"0 ";
     }else{
         cout<< shortest_path_memo<< " ";
     }
-    cout<<"? ?"<<endl;
-    cout<<"Memoization table: "<<endl;
-    cout<<"?"<<endl;
 
-    cout<<"Iterative table: "<<endl;
+    int shortest_path_iterative = maze_it_matrix(maze);
+
+    if(shortest_path_iterative >= INF){
+        cout<<"0 ";
+    }else{
+        cout<< shortest_path_iterative<<" ";
+    }
     cout<<"?"<<endl;
+    
 
     if(p){
-        int len = memo_path(path,r,c);
+        maze_parser(path,memo,maze,r,c);
+        //int len = memo_path(path,r,c); //obtiene la longitud del camino
 
-        if(len > 0){
+        //if(len > 2){
             for(int i = 0; i<r; i++){
                 for(int j = 0; j<c; j++){
-                    if(path[i][j] == " "){
-                        path[i][j] = to_string(maze[i][j]);
-                    }else if(path[i][j] == "*"){
-                        if(memo[i+1][j] > memo[i][j+1] || memo[i+1][j] > memo[i+1][j+1]){
-                            path[i+1][j] = to_string(maze[i+1][j]);
-                        }else if(memo[i][j+1] > memo[i+1][j] || memo[i][j+1] > memo[i+1][j+1]){
-                            path[i][j+1] = to_string(maze[i][j+1]);
-                        }else if(memo[i+1][j+1] > memo[i+1][j] || memo[i+1][j+1] > memo[i][j+1]){
-                            path[i+1][j+1] = to_string(maze[i+1][j+1]);
-                        }
-                    }
                     cout<<path[i][j];
                 }
                 cout<<endl;
             }
-        }else{
-            cout<<"NO EXIT"<<endl;
-        }
+        //}else{
+         //   cout<<"NO EXIT"<<endl;
+        //}
     }
 
     if(t){
+        cout<<"Memoization table: "<<endl;
+        cout<<"?"<<endl;
+
+        cout<<"Iterative table: "<<endl;
         cout<<"?"<<endl;
     }
 }
@@ -265,19 +259,13 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     int rows, cols;
+
     vector<vector<int>> maze = matrix(filename, rows, cols);
     vector<vector<int>> memo(rows, vector<int>(cols, -1));
     vector<vector<string>> path(rows, vector<string>(cols, " "));
 
 
     output(ignore_naive,p,t,maze,rows,cols,memo, path);
-
-    for(int i = 0; i<rows; i++){
-        for(int j = 0; j<cols; j++){
-            cout<<memo[i][j]<<" ";
-        }
-        cout<<endl;
-    }
 
     return 0;
 }

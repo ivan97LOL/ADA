@@ -6,8 +6,8 @@ all: maze
 maze: maze.cc
 	g++ ${OPTS} -o maze maze.cc	 
 
-tar: pow2.cc pow2.gpi makefile
-	tar cvfz 49623492A.tar.gz pow2.cc pow2.gpi makefile
+tar: maze.cc makefile
+	tar cvfz 49623492A.tar.gz maze.cc makefile
 
 clean: 
 	rm -f pow2 pow2.Steps fit.log pow2*.png *~
