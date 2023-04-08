@@ -118,20 +118,24 @@ int maze_memo(const vector<vector<int>>& matrix, vector<vector<int>>& memo, vect
 }
 
 
-int maze_it_matrix(const vector<vector<int>> &matrix) {
+int maze_it_matrix(const vector<vector<int>> &matrix, vector<vector<string>> &iterative_table) {
     int n = matrix.size();
     int m = matrix[0].size();
 
     vector<vector<int>> iterative(n, vector<int>(m, INF));
     iterative[0][0] = matrix[0][0];
 
+    iterative_table = vector<vector<string>>(n, vector<string>(m, ""));
+
     if(iterative[0][0] == 0){
+        iterative_table[0][0] = "X";
         return 0;
     }
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < m; j++) {
             if (matrix[i][j] == 0){ // celda inválida
+                iterative_table[i][j] = "X";
                 continue;
             } 
 
@@ -144,6 +148,12 @@ int maze_it_matrix(const vector<vector<int>> &matrix) {
             if (j > 0) {
                 iterative[i][j] = min(iterative[i][j], iterative[i][j-1] + matrix[i][j]); // movimiento izquierda
             }
+
+            if(iterative[i][j] == INF){
+                iterative_table[i][j] = "X";
+            }else{
+                iterative_table[i][j] = to_string(iterative[i][j]);
+            }    
         }
     }
 
@@ -176,8 +186,8 @@ void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
     }else{
         cout<< shortest_path_memo<< " ";
     }
-
-    int shortest_path_iterative = maze_it_matrix(maze);
+    vector<vector<string>> iterative_table;
+    int shortest_path_iterative = maze_it_matrix(maze, iterative_table);
 
     if(shortest_path_iterative >= INF){
         cout<<"0 ";
@@ -192,16 +202,21 @@ void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
     }
 
     if(t){
-        cout<<"Memoization table: "<<endl;
+/*        cout<<"Memoization table: "<<endl;
         for(int i = 0; i<r; i++){
             for(int j = 0; j<c; j++){
                 cout<<memo_table[i][j]<<" ";
             }
             cout<<endl;
-        }
+        }*/
 
         cout<<"Iterative table: "<<endl;
-        cout<<"?"<<endl;
+        for(int i = 0; i<r; i++){
+            for(int j = 0; j<c; j++){
+                cout<<iterative_table[i][j]<<" ";
+            }
+            cout<<endl;
+        }
     }
 }
 
