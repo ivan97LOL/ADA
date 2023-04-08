@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <queue>
 
 
 using namespace std ;
@@ -161,6 +162,31 @@ int maze_it_matrix(const vector<vector<int>> &matrix, vector<vector<string>> &it
 
 }
 
+
+int maze_it_vector(vector<vector<int>> &matrix) {
+
+    int n = matrix.size();
+    int m = matrix[0].size();
+    vector<int> v0(m + 1, INF);
+    vector<int> v1(m + 1, INF);
+    v0[1] = 0;
+    
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= m; j++) {
+            if (matrix[i - 1][j - 1] == 1) {
+                v1[j] = min({v0[j - 1], v0[j], v1[j - 1]}) + 1;
+            } else {
+                v1[j] = INF;
+            }
+        }
+        swap(v0, v1);
+    }
+    
+    return v0[m];
+}
+
+
+
 void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
 
     if(naive){
@@ -194,7 +220,14 @@ void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
     }else{
         cout<< shortest_path_iterative<<" ";
     }
-    cout<<"?"<<endl;
+
+    int shortest_path_vector = maze_it_vector(maze);
+
+    if(shortest_path_vector >= INF){
+        cout<<"0"<<endl;
+    }else{
+        cout<< shortest_path_vector<<endl;
+    }
     
 
     if(p){
