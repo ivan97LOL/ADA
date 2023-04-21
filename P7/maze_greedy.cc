@@ -13,7 +13,9 @@ void usage() {
     cerr << " [-p] [-t] [--ignore-naive] -f file" << endl;
 }
 
-vector<vector<int>> matrix(string file_name, int &r, int &c){
+vector<vector<int>> matrix(string file_name){
+
+    int r, c;
     ifstream is ( file_name );
     if( ! is ) {
         cerr << " ERROR : can ’t open file ’" << file_name << " ’." << endl ;
@@ -32,30 +34,56 @@ vector<vector<int>> matrix(string file_name, int &r, int &c){
     return mat;
 }
 
-// Función que devuelve true si una casilla (i, j) está dentro de la matriz
-bool inside_matrix(int i, int j, int n, int m) {
-    return i >= 0 && i < n && j >= 0 && j < m;
-}
+int maze_greedy(vector<vector<int>>& maze){
 
-
-int maze_greedy(vector<vector<int>>& maze, int n, int m){
-
+    int n = maze.size();
+    int m = maze[0].size();
     int length = 0;
+
+    if(maze[0][0] == 0){
+        return 0;
+    }
 
     for(int i = 0; i<n; i++){
         for(int j = 0; j<m; j++){
 
-            if(inside_matrix(i+1, j+1, n, m) && maze[i+1][j+1] == 1){
+            if(i == n-1 && j == m-1){
+                maze[i][j] = -1;
                 length++;
-                maze[i+1][j+1] = -1;
-            }else if(inside_matrix(i,j+1,n,m) && maze[i][j+1] == 1){
-                length++;
-                maze[i][j+1] = -1;
-            }else if(inside_matrix(i+1,j,n,m) && maze[i+1][j] == 1){
-                length++;
-                maze[i+1][j];
-            }else{
                 break;
+            }
+
+            if(j == m-1){
+                if(maze[i+1][j] == 0){
+                    maze[i][j] = -1;
+                    return 0;
+                }
+
+                maze[i][j] = -1;
+                length++;
+            }else if(i == n-1){
+                if(maze[i][j+1] == 0){
+                    maze[i][j] = -1;
+                    return 0;
+                }
+
+                maze[i][j] = -1;
+                length++;
+            }else{
+
+                if(maze[i+1][j+1] == 1){
+                    length++;
+                    maze[i][j] = -1;
+                }else if(maze[i][j+1] == 1){
+                    length++;
+                    maze[i][j] = -1;
+                }else if(maze[i+1][j] == 1){
+                    length++;
+                    maze[i][j] = -1;
+                }else{
+                    maze[i][j] = -1;
+                    return 0;
+                }
             }
         }
     }
@@ -63,15 +91,24 @@ int maze_greedy(vector<vector<int>>& maze, int n, int m){
     return length;
 }
 
-void output(bool p, vector<vector<int>>& maze, int r, int c){
+void output(bool p, vector<vector<int>>& maze){
 
-    int shortest_path_naive = maze_greedy(maze,r,c); //camino más corto calculado por recursión sin almacenamiento
+    int shortest_path_naive = maze_greedy(maze); //camino más corto calculado por recursión sin almacenamiento
     
     cout<< shortest_path_naive<<endl;
     
     if(p){
         
-        
+        for(unsigned i = 0; i<maze.size(); i++){
+            for(unsigned j = 0; j<maze[0].size(); j++){
+                if(maze[i][j] == -1){
+                    cout << '*';
+                }else{
+                    cout << maze[i][j];
+                }
+            }
+            cout << endl;
+        }
     }
 }
 
@@ -112,11 +149,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    int rows, cols;
-
-    vector<vector<int>> maze = matrix(filename, rows, cols);
-
-    output(p,maze,rows,cols);
+    vector<vector<int>> maze = matrix(filename);
+    output(p,maze);
 
     return 0;
 }
