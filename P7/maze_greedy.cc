@@ -54,24 +54,27 @@ int maze_greedy(vector<vector<int>>& maze, int i, int j){
 
     while(i < n && j < m){
 
-        if(i == n-1 && j == m-1 && maze[i][j] == 1){
-            length++;
+        if(i == n-1 && j == m-1){ //termina el bucle
             maze[i][j] = -1;
             break;
-
-        }else if(inside_matrix(i+1,j+1,n,m) && maze[i+1][j+1] == 1){
+        }
+        
+        if(inside_matrix(i+1,j+1,n,m) && maze[i+1][j+1] == 1){ //va en diagonal
             maze[i+1][j+1] = -1;
             length++;
             i++;
             j++;
-        }else if(inside_matrix(i,j+1,n,m) && maze[i][j+1] == 1){
-            maze[i][j+1] = -1;
-            length++;
-            j++;
-        }else if(inside_matrix(i+1,j,n,m) && maze[i+1][j] == 1){
+
+        }else if(inside_matrix(i+1,j,n,m) && maze[i+1][j] == 1){ //va hacia abajo
             maze[i+1][j] = -1;
             length++;
             i++;
+
+        }else if(inside_matrix(i,j+1,n,m) && maze[i][j+1] == 1){ //va hacia la derecha
+            maze[i][j+1] = -1;
+            length++;
+            j++;
+
         }else{
             return 0;
         }
@@ -82,9 +85,9 @@ int maze_greedy(vector<vector<int>>& maze, int i, int j){
 
 void output(bool p, vector<vector<int>>& maze){
 
-    int shortest_path_naive = maze_greedy(maze,0,0); //camino más corto calculado por recursión sin almacenamiento
+    int shortest_path_greedy = maze_greedy(maze,0,0); //camino más corto calculado por algoritmo voraz
     
-    cout<< shortest_path_naive<<endl;
+    cout<< shortest_path_greedy<<endl;
     
     if(p){
         
