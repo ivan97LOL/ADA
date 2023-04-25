@@ -4,10 +4,8 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <queue>
 
-
-using namespace std ;
+using namespace std;
 
 const int INF = 1e9; // valor de infinito
 
@@ -118,8 +116,7 @@ int maze_memo(const vector<vector<int>>& matrix, vector<vector<int>>& memo, vect
     return shortest;
 }
 
-
-int maze_it_matrix(const vector<vector<int>> &matrix, vector<vector<string>> &iterative_table) {
+int maze_it_matrix(const vector<vector<int>> &matrix, vector<vector<string>> &iterative_table, vector<vector<string>> &path) {
     int n = matrix.size();
     int m = matrix[0].size();
 
@@ -130,6 +127,7 @@ int maze_it_matrix(const vector<vector<int>> &matrix, vector<vector<string>> &it
 
     if(iterative[0][0] == 0){
         iterative_table[0][0] = "X";
+        path[0][0] = "NO EXIT";
         return 0;
     }
 
@@ -137,6 +135,7 @@ int maze_it_matrix(const vector<vector<int>> &matrix, vector<vector<string>> &it
         for (int j = 0; j < m; j++) {
             if (matrix[i][j] == 0){ // celda inválida
                 iterative_table[i][j] = "X";
+                path[i][j] = to_string(matrix[i][j]);
                 continue;
             } 
 
@@ -152,8 +151,10 @@ int maze_it_matrix(const vector<vector<int>> &matrix, vector<vector<string>> &it
 
             if(iterative[i][j] == INF){
                 iterative_table[i][j] = "X";
+                path[i][j] = to_string(matrix[i][j]);
             }else{
                 iterative_table[i][j] = to_string(iterative[i][j]);
+                path[i][j] = "*";
             }    
         }
     }
@@ -186,6 +187,26 @@ int maze_it_vector(vector<vector<int>> &matrix) {
 }
 
 
+int maze_parser(const vector<vector<int>> &maze, vector<vector<string>> &path){
+    
+    int n = maze.size();
+    int m = maze[0].size();
+
+    if(path[n-1][m-1] != "*"){
+        return 1;
+    }
+
+    for(int i = n-1; i >= 0; i--){
+        for(int j = m-1; j>= 0; j--){
+            if(inside_matrix(i-1,j,n,m) && inside_matrix(i,j-1,n,m) && (path[i-1][j] == "*" || path[i][j-1] == "*") && path[i-1][j-1] == "*"){
+                path[i-1][j] = to_string(maze[i-1][j]);
+                path[i][j-1] = to_string(maze[i][j-1]);
+            }
+        }
+    }
+    return 0;
+}
+
 
 void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
 
@@ -203,7 +224,7 @@ void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
     }
     vector<vector<string>> memo_table(r, vector<string>(c, "-"));
     vector<vector<int>> memo(r, vector<int>(c, -1));
-    vector<vector<string>> path(r, vector<string>(c, " "));
+    vector<vector<string>> path(r, vector<string>(c));
     int shortest_path_memo = maze_memo(maze,memo,memo_table,0,0); //camino más corto calculado por memoización
 
 
@@ -213,7 +234,7 @@ void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
         cout<< shortest_path_memo<< " ";
     }
     vector<vector<string>> iterative_table;
-    int shortest_path_iterative = maze_it_matrix(maze, iterative_table);
+    int shortest_path_iterative = maze_it_matrix(maze, iterative_table, path);
 
     if(shortest_path_iterative >= INF){
         cout<<"0 ";
@@ -229,19 +250,29 @@ void output(bool naive, bool p, bool t, vector<vector<int>> maze, int r, int c){
         cout<< shortest_path_vector<<endl;
     }
     
-
     if(p){
-        cout<<"?"<<endl;
+            if(maze_parser(maze,path) == 1){
+                cout<<"NO EXIT"<<endl;
+            }else{
+                for(int i = 0; i<r; i++){
+                    for(int j = 0; j<c; j++){
+                        cout<<path[i][j];
+                    }
+                    cout<<endl;
+                }
+            }
+            
     }
 
     if(t){
-/*        cout<<"Memoization table: "<<endl;
+        
+        cout<<"Memoization table: "<<endl;
         for(int i = 0; i<r; i++){
             for(int j = 0; j<c; j++){
                 cout<<memo_table[i][j]<<" ";
             }
             cout<<endl;
-        }*/
+        }
 
         cout<<"Iterative table: "<<endl;
         for(int i = 0; i<r; i++){
