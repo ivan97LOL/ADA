@@ -51,7 +51,7 @@ bool inside_matrix(int i, int j, int n, int m) {
     return i >= 0 && i < n && j >= 0 && j < m;
 }
 
-void maze_bt(const vector<vector<int>>& maze, vector<vector<int>>& memory, vector<vector<bool>> &visited, int r, int c, int path, int& shortest_path_bt, vector<string>& current_path_traveled, vector<string>& path_traveled, Stats& stats) {
+void maze_bb(const vector<vector<int>>& maze, vector<vector<int>>& memory, vector<vector<bool>> &visited, int r, int c, int path, int& shortest_path_bt, vector<string>& current_path_traveled, vector<string>& path_traveled, Stats& stats) {
     int n = maze.size();
     int m = maze[0].size();
 
@@ -96,7 +96,7 @@ void maze_bt(const vector<vector<int>>& maze, vector<vector<int>>& memory, vecto
             visited[next_r][next_c] = true;
             current_path_traveled.push_back(to_string(i+1));
 
-            maze_bt(maze, memory, visited, next_r, next_c, new_path, shortest_path_bt, current_path_traveled, path_traveled, stats);
+            maze_bb(maze, memory, visited, next_r, next_c, new_path, shortest_path_bt, current_path_traveled, path_traveled, stats);
 
             visited[next_r][next_c] = false;
 
