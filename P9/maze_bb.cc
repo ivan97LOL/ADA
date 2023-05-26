@@ -17,8 +17,13 @@ struct Stats {
     int leaf;
     int unfeasible;
     int not_promising;
+    int promising_but_discarded;
+    int best_solution_updated_from_leafs;
+    int best_solution_updated_from_bound;
 
-    Stats() : visited(0), explored(0), leaf(0), unfeasible(0), not_promising(0) {}
+    Stats() : visited(0), explored(0), leaf(0), unfeasible(0), 
+            not_promising(0), promising_but_discarded(0), best_solution_updated_from_leafs(0),
+            best_solution_updated_from_bound(0) {}
 };
 
 void usage() {
@@ -74,6 +79,7 @@ void maze_bb(const vector<vector<int>>& maze, vector<vector<int>>& memory, vecto
         if (path < shortest_path_bt) {
             shortest_path_bt = path;
             path_traveled = current_path_traveled;
+            stats.best_solution_updated_from_leafs++;
         }
         return;
     }
@@ -155,7 +161,7 @@ void reconstruct_path(vector<vector<int>>& mark_path, vector<string> path_travel
 
 
 void output(bool p, bool p2D, const vector<vector<int>>& maze) {
-    int shortest_path_bt = INF - 1;
+    int shortest_path_bb = INF - 1;
     const int MAX_LENGTH = maze.size() * maze[0].size();
     vector<vector<int>> memory(maze.size(), vector<int>(maze[0].size(), INF));
     vector<vector<bool>> visited(maze.size(), vector<bool>(maze[0].size(), false));
@@ -168,26 +174,26 @@ void output(bool p, bool p2D, const vector<vector<int>>& maze) {
 
     visited[0][0] = true;
 
-    maze_bt(maze, memory, visited, 0, 0, 1, shortest_path_bt, current_path_traveled, path_traveled, stats);
+    maze_bb(maze, memory, visited, 0, 0, 1, shortest_path_bb, current_path_traveled, path_traveled, stats);
 
     auto end_time = clock();
 
-    if(shortest_path_bt > MAX_LENGTH){
+    if(shortest_path_bb > MAX_LENGTH){
         cout<<0<<endl;
     }
     else{
-        cout << shortest_path_bt << endl;
+        cout << shortest_path_bb << endl;
     }
 
     cout << stats.visited << " " << stats.explored << " " << stats.leaf << " " << stats.unfeasible << " " << stats.not_promising << endl;
     cout << 1000.0 * (end_time-start_time)/CLOCKS_PER_SEC<< endl;
 
-    if (shortest_path_bt > MAX_LENGTH) {
+    if (shortest_path_bb > MAX_LENGTH) {
         cout << "NO EXIT" << endl;
     }
 
     if (p2D) {
-        if(shortest_path_bt < MAX_LENGTH){
+        if(shortest_path_bb < MAX_LENGTH){
             reconstruct_path(mark_path, path_traveled);
             for(unsigned long i = 0; i<mark_path.size(); i++){
                 for(unsigned long j = 0; j<mark_path[0].size(); j++){
@@ -204,7 +210,7 @@ void output(bool p, bool p2D, const vector<vector<int>>& maze) {
     }
 
     if (p) {
-        if (shortest_path_bt > MAX_LENGTH) {
+        if (shortest_path_bb > MAX_LENGTH) {
             cout << "<NO EXIT>"<<endl;
         }
         else{
