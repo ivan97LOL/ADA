@@ -64,7 +64,7 @@ int mcp_it_matrix(const vector<vector<int>> &map, vector<vector<int>> &iterative
 }
 
 //Función backtracking
-int mcp_bt(const vector<vector<int>> &map, vector<vector<int>> &iterative, vector<vector<bool>> &visited, int x, int y){
+int mcp_bt(const vector<vector<int>> &maze, vector<vector<int>> &iterative, vector<vector<bool>> &visited, int x, int y){
     enum Step {SE, E, S, N, NE, SW, W, NW};
     map<Step, tuple<int, int>> steps_inc;
 
@@ -77,6 +77,8 @@ int mcp_bt(const vector<vector<int>> &map, vector<vector<int>> &iterative, vecto
     steps_inc[W] = make_tuple(0,-1);
     steps_inc[NW] = make_tuple(-1,-1);
 
+    int min_cost = iterative[x][y];
+
     for(auto it = steps_inc.begin(); it != steps_inc.end(); it++){
         int incx, incy;
 
@@ -85,14 +87,21 @@ int mcp_bt(const vector<vector<int>> &map, vector<vector<int>> &iterative, vecto
         int newy = y + incy;
 
         //check factible
-        //check promising
+        if(inside_matrix(newx,newy,maze.size(), maze[0].size()) && !visited[newx][newy]){
+            visit++;
+            visited[newx][newy] = true;
+            int cost = maze[newx][newy] + mcp_bt(maze, iterative, visited, newx, newy);
 
-        visited[newx][newy] = true;
-        mcp_bt(map, iterative, visited, newx, newy);
-        visited[newx][newy] = false;
-
-
+            //check promising
+            if(cost < min_cost){
+                explored++;
+                min_cost = cost;
+                iterative[x][y] = min_cost;
+            }
+            visited[newx][newy] = false;
+        }    
     }
+    return iterative[x][y];
 }
 
 //Función que muestra la salida según parámetros

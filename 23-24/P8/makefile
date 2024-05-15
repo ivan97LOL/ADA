@@ -1,7 +1,7 @@
 # Iván Álvarez García DNI: 49623492A
 OPTS = -Wall -Wextra -O3 -std=c++0x
 
-all: mcp:bt
+all: mcp_bt
 
 maze: mcp_bt.cc
 	g++ ${OPTS} -o mcp_bt mcp_bt.cc	 
