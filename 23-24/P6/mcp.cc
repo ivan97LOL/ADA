@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 using namespace std;
 
@@ -99,9 +100,117 @@ int mcp_memo(const vector<vector<int>>& map, vector<vector<int>>& memo, int i, i
     int diagonal = mcp_memo(map, memo, i-1, j-1); // calcular el camino más corto hacia la diagonal
     int shortest_path = min(left, min(up, diagonal)) + map[i][j]; // encontrar el camino más corto de los tres posibles y sumar el valor de la casilla actual
 
-
     memo[i][j] = shortest_path; // almacenar el resultado en la matriz de memoización
     return shortest_path;
+}
+
+int mcp_it_matrix(const vector<vector<int>> &map, vector<vector<int>> &iterative) {
+    int n = map.size();
+    int m = map[0].size();
+
+    iterative[0][0] = map[0][0];
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            if (i > 0 && j > 0) {
+                iterative[i][j] = min(iterative[i][j], iterative[i-1][j-1] + map[i][j]); // movimiento diagonal
+            }
+            if (i > 0) {
+                iterative[i][j] = min(iterative[i][j], iterative[i-1][j] + map[i][j]); // movimiento arriba
+            }
+            if (j > 0) {
+                iterative[i][j] = min(iterative[i][j], iterative[i][j-1] + map[i][j]); // movimiento izquierda
+            }   
+        }
+    }
+
+    return iterative[n-1][m-1];
+
+}
+
+int mcp_it_vector(vector<vector<int>> &map) {
+    int n = map.size();
+    int m = map[0].size();
+    
+    // Usamos solo dos vectores para almacenar los costes mínimos
+    vector<int> prev(m, INF); // Vector para la iteración anterior
+    vector<int> curr(m, INF); // Vector para la iteración actual
+    
+    // Inicialización del primer elemento
+    prev[0] = map[0][0];
+    
+    // Iteración sobre las filas
+    for (int i = 0; i < n; i++) {
+        // Iteración sobre las columnas
+        for (int j = 0; j < m; j++) {
+            // Calculamos el costo mínimo para llegar a la casilla actual
+            curr[j] = map[i][j];
+            if (i > 0 && j > 0) {
+                curr[j] += min({prev[j], prev[j - 1], curr[j - 1]});
+            } else if (i > 0) {
+                curr[j] += prev[j];
+            } else if (j > 0) {
+                curr[j] += curr[j - 1];
+            }
+        }
+        // Actualizamos el vector previo para la siguiente iteración
+        swap(prev, curr);
+    }
+    
+    // Devolvemos el coste mínimo para llegar a la última casilla
+    return prev[m - 1];
+}
+
+int mcp_parser(vector<vector<string>> &path, const vector<vector<int>> map, const vector<vector<int>> memo) {
+    int n = path.size();
+    int m = path[0].size();
+    int path_size = 0;
+
+    // Rellenamos la matriz con puntos
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < m; j++) {
+            path[i][j] = ".";
+        }
+    }
+
+    // Marcamos el punto de inicio y el de final
+    path[0][0] = ".";
+    path[n - 1][m - 1] = ".";
+
+    // Marcamos el camino
+    int i = n - 1;
+    int j = m - 1;
+    while (i != 0 || j != 0) {
+        path[i][j] = "x";
+        if (i > 0 && j > 0) {
+            int left = memo[i][j - 1];
+            int diagonal = memo[i - 1][j - 1];
+            int up = memo[i - 1][j];
+            if (diagonal <= left && diagonal <= up) {
+                i--;
+                j--;
+            } else if (left <= diagonal && left <= up) {
+                j--;
+            } else {
+                i--;
+            }
+        } else if (i > 0) {
+            i--;
+        } else {
+            j--;
+        }
+    }
+    path[0][0] = "x";  // Marcar el punto de inicio
+
+    // Calcular el tamaño del camino
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < m; j++) {
+            if(path[i][j] == "x") {
+                path_size += map[i][j];
+            }
+        }
+    }
+    return path_size;
 }
 
 
@@ -120,6 +229,8 @@ void output(bool naive, bool p, bool t, vector<vector<int>> map, int r, int c){
             cout<< shortest_path_naive<< " ";
         }
     }
+    
+    vector<vector<string>> path(r, vector<string>(c));
     vector<vector<int>> memo(r, vector<int>(c, INF));
     int shortest_path_memo = mcp_memo(map,memo,r-1,c-1); //camino más corto calculado por memoización
      if(shortest_path_memo >= INF){
@@ -127,14 +238,44 @@ void output(bool naive, bool p, bool t, vector<vector<int>> map, int r, int c){
     }else{
         cout<< shortest_path_memo<< " ";
     }
-    cout<<"? ?"<<endl;
+    vector<vector<int>> iterative(r, vector<int>(c, INF));
+    int shortest_path_iterative = mcp_it_matrix(map, iterative);
+    
+    if(shortest_path_iterative >= INF){
+        cout<<"0 ";
+    }else{
+        cout<< shortest_path_iterative<<" ";
+    }
+
+    int shortest_path_vector = mcp_it_vector(map);
+
+    if(shortest_path_vector >= INF){
+        cout<<"0"<<endl;
+    }else{
+        cout<< shortest_path_vector<<endl;
+    }
+
     if(p){
-        cout<<"?"<<endl;
+        int mcp = mcp_parser(path, map, memo);
+        for(int i = 0; i < r; i++){
+            for(int j = 0; j < c; j++){
+                cout<<path[i][j];
+            }
+            cout<< endl;
+        }
+        cout<<mcp<<endl;
     }
 
     if(t){
-        cout<<"?"<<endl;
+        for(int i = 0; i<r; i++){
+            for(int j = 0; j<c; j++){
+                cout<<iterative[i][j]<<" ";
+            }
+            cout<<endl;
+        }
     }
+
+    
 }
 
 int main(int argc, char* argv[]) {
