@@ -3,8 +3,8 @@
 #include <vector>
 #include <algorithm>
 #include <map>
-#include <limits>
 #include <tuple>
+#include <limits>
 
 using namespace std;
 
@@ -62,7 +62,7 @@ int mcp_it_matrix(const vector<vector<int>> &map, vector<vector<int>> &iterative
     return iterative[n-1][m-1];
 }
 
-int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x, int y, int &min_cost, int current_cost, int pessimist_bound) {
+int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x, int y, int current_cost, int &best_cost) {
     if (x == maze.size() - 1 && y == maze[0].size() - 1) {
         leaf++;
         return current_cost + maze[x][y];
@@ -71,15 +71,14 @@ int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x
     visit++;
     current_cost += maze[x][y];
 
-    // Si el coste actual ya supera la cota pesimista, no continuar explorando esta rama
-    if (current_cost >= pessimist_bound) {
+    // Si el coste actual ya supera el mejor coste, no continuar explorando esta rama
+    if (current_cost >= best_cost) {
         not_promising++;
         return INF;
     }
 
     int n = maze.size();
     int m = maze[0].size();
-    int best_cost = INF;
 
     enum Step {SE, E, S, N, NE, SW, W, NW};
     map<Step, tuple<int, int>> steps_inc = {
@@ -103,7 +102,7 @@ int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x
             visited[newx][newy] = true;
             explored++;
 
-            int cost = mcp_bt(maze, visited, newx, newy, min_cost, current_cost, pessimist_bound);
+            int cost = mcp_bt(maze, visited, newx, newy, current_cost, best_cost);
 
             if (cost < best_cost) {
                 best_cost = cost;
@@ -121,9 +120,9 @@ void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
     vector<vector<int>> iterative(r, vector<int>(c, INF));
     int shortest_path_iterative = mcp_it_matrix(map, iterative);
 
-    int min_cost = shortest_path_iterative;
     visited[0][0] = true; // Empezamos desde el punto inicial
-    int bt = mcp_bt(map, visited, 0, 0, min_cost, 0, shortest_path_iterative);
+    int best_cost = shortest_path_iterative;
+    int bt = mcp_bt(map, visited, 0, 0, 0, best_cost);
 
     cout << bt << endl;
     cout << visit << " " << explored << " " << leaf << " " << unfeasible << " " << not_promising << endl;
