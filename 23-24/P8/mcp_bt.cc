@@ -64,18 +64,26 @@ int mcp_it_matrix(const vector<vector<int>> &map, vector<vector<int>> &iterative
     return iterative[n-1][m-1];
 }
 
-int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x, int y, int current_cost, int &best_cost) {
+int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, vector<pair<int, int>> &best_path, vector<pair<int, int>> &current_path, int x, int y, int current_cost, int &best_cost) {
     if (x == maze.size() - 1 && y == maze[0].size() - 1) {
         leaf++;
+        current_path.push_back({x, y});
+        if (current_cost + maze[x][y] < best_cost) {
+            best_cost = current_cost + maze[x][y];
+            best_path = current_path;
+        }
+        current_path.pop_back();
         return current_cost + maze[x][y];
     }
 
     visit++;
     current_cost += maze[x][y];
+    current_path.push_back({x, y});
 
     // Si el coste actual ya supera el mejor coste, no continuar explorando esta rama
     if (current_cost >= best_cost) {
         not_promising++;
+        current_path.pop_back();
         return INF;
     }
 
@@ -104,7 +112,7 @@ int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x
             visited[newx][newy] = true;
             explored++;
 
-            int cost = mcp_bt(maze, visited, newx, newy, current_cost, best_cost);
+            int cost = mcp_bt(maze, visited, best_path, current_path, newx, newy, current_cost, best_cost);
 
             if (cost < best_cost) {
                 best_cost = cost;
@@ -114,7 +122,27 @@ int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x
         }
     }
 
+    current_path.pop_back();
     return best_cost;
+}
+
+void parser(const vector<vector<int>> &maze, const vector<vector<bool>> &visited) {
+    int cost = 0;
+    for(int i = 0; i < visited.size(); i++){
+        for(int j = 0; j < visited[0].size(); j++){
+            if(visited[i][j] == true){
+                cout<<"x";
+                cost += maze[i][j];
+            }
+            else{
+                cout<<".";
+            }
+        }
+        cout<<endl;
+    }
+
+    cout<<cost<<endl;
+
 }
 
 void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
@@ -125,7 +153,16 @@ void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
 
     visited[0][0] = true; // Empezamos desde el punto inicial
     int best_cost = shortest_path_iterative;
-    int bt = mcp_bt(map, visited, 0, 0, 0, best_cost);
+
+    vector<pair<int, int>> best_path;
+    vector<pair<int, int>> current_path;
+
+    int bt = mcp_bt(map, visited, best_path, current_path, 0, 0, 0, best_cost);
+
+    // Actualizamos visited con el mejor camino encontrado
+    for (const auto& coord : best_path) {
+        visited[coord.first][coord.second] = true;
+    }
 
     auto end = std::chrono::steady_clock::now();
     std::chrono::duration<double> duration = end - start;
@@ -133,7 +170,11 @@ void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
 
     cout << bt << endl;
     cout << visit << " " << explored << " " << leaf << " " << unfeasible << " " << not_promising << endl;
-    cout<< fixed << setprecision(3) << seconds <<endl;
+    cout << fixed << setprecision(3) << seconds << endl;
+
+    if (p2D) {
+        parser(map, visited);
+    }
 }
 
 int main(int argc, char* argv[]) {
