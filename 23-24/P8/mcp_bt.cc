@@ -64,13 +64,14 @@ int mcp_it_matrix(const vector<vector<int>> &map, vector<vector<int>> &iterative
     return iterative[n-1][m-1];
 }
 
-int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, vector<pair<int, int>> &best_path, vector<pair<int, int>> &current_path, int x, int y, int current_cost, int &best_cost) {
+int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, vector<pair<int, int>> &best_path, vector<pair<int, int>> &current_path, vector<string> &best_directions, vector<string> &current_directions, int x, int y, int current_cost, int &best_cost) {
     if (x == maze.size() - 1 && y == maze[0].size() - 1) {
         leaf++;
         current_path.push_back({x, y});
         if (current_cost + maze[x][y] < best_cost) {
             best_cost = current_cost + maze[x][y];
             best_path = current_path;
+            best_directions = current_directions;
         }
         current_path.pop_back();
         return current_cost + maze[x][y];
@@ -91,34 +92,37 @@ int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, vecto
     int m = maze[0].size();
 
     enum Step {SE, E, S, N, NE, SW, W, NW};
-    map<Step, tuple<int, int>> steps_inc = {
-        {N, make_tuple(-1, 0)},
-        {NE, make_tuple(-1, 1)},
-        {E, make_tuple(0, 1)},
-        {SE, make_tuple(1, 1)},
-        {S, make_tuple(1, 0)},
-        {SW, make_tuple(1, -1)},
-        {W, make_tuple(0, -1)},
-        {NW, make_tuple(-1, -1)}
+    map<Step, tuple<int, int, string>> steps_inc = {
+        {N, make_tuple(-1, 0, "N")},
+        {NE, make_tuple(-1, 1, "NE")},
+        {E, make_tuple(0, 1, "E")},
+        {SE, make_tuple(1, 1, "SE")},
+        {S, make_tuple(1, 0, "S")},
+        {SW, make_tuple(1, -1, "SW")},
+        {W, make_tuple(0, -1, "W")},
+        {NW, make_tuple(-1, -1, "NW")}
     };
 
     for (const auto &it : steps_inc) {
         int incx, incy;
-        tie(incx, incy) = it.second;
+        string direction;
+        tie(incx, incy, direction) = it.second;
         int newx = x + incx;
         int newy = y + incy;
 
         if (inside_matrix(newx, newy, n, m) && !visited[newx][newy]) {
             visited[newx][newy] = true;
             explored++;
+            current_directions.push_back(direction);
 
-            int cost = mcp_bt(maze, visited, best_path, current_path, newx, newy, current_cost, best_cost);
+            int cost = mcp_bt(maze, visited, best_path, current_path, best_directions, current_directions, newx, newy, current_cost, best_cost);
 
             if (cost < best_cost) {
                 best_cost = cost;
             }
 
             visited[newx][newy] = false;
+            current_directions.pop_back();
         }
     }
 
@@ -131,18 +135,49 @@ void parser(const vector<vector<int>> &maze, const vector<vector<bool>> &visited
     for(int i = 0; i < visited.size(); i++){
         for(int j = 0; j < visited[0].size(); j++){
             if(visited[i][j] == true){
-                cout<<"x";
+                cout << "x";
                 cost += maze[i][j];
             }
             else{
-                cout<<".";
+                cout << ".";
             }
         }
-        cout<<endl;
+        cout << endl;
     }
 
-    cout<<cost<<endl;
+    cout << cost << endl;
+}
 
+void print_directions(const vector<string> &directions) {
+    cout<<"<";
+    for (const auto &dir : directions) {
+        
+        if(dir == "N"){
+            cout<<1;
+        }
+        else if(dir == "NE"){
+            cout<<2;
+        }
+        else if(dir == "E"){
+            cout<<3;
+        }
+        else if(dir == "SE"){
+            cout<<4;
+        }
+        else if(dir == "S"){
+            cout<<5;
+        }
+        else if(dir == "SW"){
+            cout<<6;
+        }
+        else if(dir == "W"){
+            cout<<7;
+        }
+        else if(dir == "NW"){
+            cout<<8;
+        }
+    }
+    cout <<">"<< endl;
 }
 
 void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
@@ -156,8 +191,10 @@ void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
 
     vector<pair<int, int>> best_path;
     vector<pair<int, int>> current_path;
+    vector<string> best_directions;
+    vector<string> current_directions;
 
-    int bt = mcp_bt(map, visited, best_path, current_path, 0, 0, 0, best_cost);
+    int bt = mcp_bt(map, visited, best_path, current_path, best_directions, current_directions, 0, 0, 0, best_cost);
 
     // Actualizamos visited con el mejor camino encontrado
     for (const auto& coord : best_path) {
@@ -172,8 +209,12 @@ void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
     cout << visit << " " << explored << " " << leaf << " " << unfeasible << " " << not_promising << endl;
     cout << fixed << setprecision(3) << seconds << endl;
 
-    if (p2D) {
+    if(p2D){
         parser(map, visited);
+    }
+
+    if(p){
+        print_directions(best_directions);
     }
 }
 
