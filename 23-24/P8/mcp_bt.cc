@@ -5,6 +5,8 @@
 #include <map>
 #include <tuple>
 #include <limits>
+#include <chrono>
+#include <iomanip>
 
 using namespace std;
 
@@ -116,6 +118,7 @@ int mcp_bt(const vector<vector<int>> &maze, vector<vector<bool>> &visited, int x
 }
 
 void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
+    auto start = std::chrono::steady_clock::now();
     vector<vector<bool>> visited(r, vector<bool>(c, false));
     vector<vector<int>> iterative(r, vector<int>(c, INF));
     int shortest_path_iterative = mcp_it_matrix(map, iterative);
@@ -124,8 +127,13 @@ void output(bool p, bool p2D, const vector<vector<int>> &map, int r, int c) {
     int best_cost = shortest_path_iterative;
     int bt = mcp_bt(map, visited, 0, 0, 0, best_cost);
 
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    double seconds = duration.count();
+
     cout << bt << endl;
     cout << visit << " " << explored << " " << leaf << " " << unfeasible << " " << not_promising << endl;
+    cout<< fixed << setprecision(3) << seconds <<endl;
 }
 
 int main(int argc, char* argv[]) {
